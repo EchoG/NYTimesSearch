@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">NYTimesSearch</string>
+    <string name="action_settings">Filter</string>
+    <string name="hint">Enter Search Query</string>
+    <string name="search">Search</string>
+    <string name="title_activity_article">ArticleActivity</string>
+    <string name="saveButton">SAVE</string>
+    <string-array name="orders">
+        <item>Oldest</item>
+        <item>Newest</item>
+    </string-array>
+</resources>
