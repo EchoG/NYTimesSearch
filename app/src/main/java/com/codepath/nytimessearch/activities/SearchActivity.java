@@ -2,6 +2,7 @@ package com.codepath.nytimessearch.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -16,6 +17,7 @@ import android.widget.GridView;
 
 import com.codepath.nytimessearch.R;
 import com.codepath.nytimessearch.adapters.ArticleArrayAdapter;
+import com.codepath.nytimessearch.adapters.EndlessScrollListener;
 import com.codepath.nytimessearch.models.Article;
 import com.codepath.nytimessearch.models.Filter;
 import com.loopj.android.http.AsyncHttpClient;
@@ -74,6 +76,29 @@ public class SearchActivity extends AppCompatActivity {
                 startActivity(i);
             }
         });
+
+        gvResults.setOnScrollListener(new EndlessScrollListener() {
+            @Override
+            public boolean onLoadMore(int page, int totalItemsCount) {
+                if (page < 100) {
+                    onArticleSearchDelayed(page, 500);
+                    return true; // ONLY if more data is actually being loaded; false otherwise.
+                }
+                else {
+                    return false;
+                }
+            }
+        });
+    }
+
+    public void onArticleSearchDelayed(final int page, long delayMillis) {
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                onArticleSearchDetail(page);
+            }
+        }, delayMillis);
     }
 
     @Override
@@ -101,6 +126,10 @@ public class SearchActivity extends AppCompatActivity {
     public void onArticleSearch(View view) {
         adapter.clear();
 
+        onArticleSearchDetail(0);
+    }
+
+    public void onArticleSearchDetail(final int page){
         String query = etQuery.getText().toString();
 
         AsyncHttpClient client = new AsyncHttpClient();
@@ -108,7 +137,7 @@ public class SearchActivity extends AppCompatActivity {
 
         RequestParams params = new RequestParams();
         params.put("api-key", "61b7229c4c664b23b87344b1ae5451c1");
-        params.put("page", 0);
+        params.put("page", page);
         params.put("q", query);
 
         params.put("begin_date", new SimpleDateFormat("yyyyMMdd").format(filter.beginDate));
@@ -128,11 +157,13 @@ public class SearchActivity extends AppCompatActivity {
             deskQuery.append("\"Sports\" ");
         }
 
-        if(deskQuery!= null && !deskQuery.equals("")){
+        if(deskQuery.length() > 0){
             String desk = "news_desk:(" + deskQuery.toString() + ")";
             params.put("fq", desk);
         }
 
+        Log.d("url ", url);
+        Log.d("param", params.toString());
         client.get(url, params, new JsonHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
@@ -147,6 +178,23 @@ public class SearchActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
+                super.onFailure(statusCode, headers, throwable, errorResponse);
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONArray errorResponse) {
+                super.onFailure(statusCode, headers, throwable, errorResponse);
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                super.onFailure(statusCode, headers, responseString, throwable);
+            }
+
+
         });
     }
 
